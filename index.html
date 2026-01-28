@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HOME EASE - Login & Booking System</title>
+    <style>
+        /* --- CSS STYLES --- */
+        :root {
+            --primary: #2563eb; /* Customer Blue */
+            --secondary: #64748b;
+            --admin-color: #7e22ce; /* Admin Purple */
+            --provider-color: #16a34a; /* Provider Green */
+            --bg: #f1f5f9;
+            --white: #ffffff;
+            --text: #0f172a;
+            --danger: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: var(--bg); color: var(--text); padding-bottom: 50px; min-height: 100vh; display: flex; flex-direction: column; }
+
+        /* HEADER */
+        header {
+            background: var(--white);
+            padding: 1rem 5%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo { font-size: 1.5rem; font-weight: 800; color: var(--primary); cursor: pointer; }
+        .nav-links button { margin-left: 15px; cursor: pointer; background: none; border: none; font-weight: 600; color: var(--secondary); }
+        .nav-links button:hover { color: var(--primary); }
+
+        /* AUTH SCREEN */
+        .auth-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .auth-box {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .auth-box h2 { margin-bottom: 20px; color: var(--primary); }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 5px; font-size: 0.9rem; }
+        .input-group input, .input-group select {
+            width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; transition: 0.3s;
+        }
+        .input-group input:focus { border-color: var(--primary); }
+        .btn-block { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; }
+        .btn-block:hover { opacity: 0.9; }
+        .toggle-link { margin-top: 15px; display: block; color: var(--primary); cursor: pointer; font-size: 0.9rem; text-decoration: underline; }
+
+        /* DASHBOARDS */
+        .dashboard-section { display: none; padding: 2rem 5%; animation: fadeIn 0.4s; }
+        .dashboard-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* GRIDS & CARDS */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+        .service-icon { font-size: 2.5rem; margin-bottom: 10px; }
+        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; margin-top: 10px; }
+        
+        .status-pending { background: #fef9c3; color: #854d0e; }
+        .status-assigned { background: #dbeafe; color: #1e40af; }
+        .status-completed { background: #dcfce7; color: #166534; }
+
+        /* TABLES */
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-radius: 8px; overflow: hidden; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f8fafc; font-weight: 600; }
+
+        /* MODAL */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 30px; border-radius: 10px; width: 90%; max-width: 400px; position: relative; }
+        .close-modal { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; cursor: pointer; }
+
+        /* ALERTS */
+        .alert { padding: 10px; border-radius: 5px; margin-bottom: 15px; display: none; font-size: 0.9rem; }
+        .alert-error { background: #fee2e2; color: #991b1b; }
+        .alert-success { background: #dcfce7; color: #166534; }
+
+        /* FOOTER */
+        footer { margin-top: auto; background: white; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0; color: var(--secondary); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo" onclick="window.location.reload()">🏠 HOME EASE</div>
+        <div class="nav-links" id="nav-links">
+            </div>
+    </header>
+
+    <section id="auth-section" class="auth-container">
+        <div class="auth-box" id="login-box">
+            <h2>Welcome Back</h2>
+            <div id="login-alert" class="alert alert-error"></div>
+            <div class="input-group">
+                <label>Email / Username</label>
+                <input type="text" id="login-email" placeholder="user@example.com">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="login-pass" placeholder="Enter password">
+            </div>
+            <button class="btn-block" onclick="handleLogin()">Log In</button>
+            
+            <div style="margin-top: 20px; font-size: 0.8rem; color: #666; background: #f8fafc; padding: 10px; border-radius: 5px;">
+                <strong>Demo Credentials:</strong><br>
+                Admin: admin / admin123<br>
+                Provider: provider / 12345
+            </div>
+            
+            <span class="toggle-link" onclick="toggleAuth('signup')">New here? Create an account</span>
+        </div>
+
+        <div class="auth-box" id="signup-box" style="display: none;">
+            <h2>Create Account</h2>
+            <div id="signup-alert" class="alert alert-error"></div>
+            <div class="input-group">
+                <label>Full Name</label>
+                <input type="text" id="reg-name" placeholder="John Doe">
+            </div>
+            <div class="input-group">
+                <label>Email</label>
+                <input type="email" id="reg-email" placeholder="john@example.com">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="reg-pass" placeholder="Create a password">
+            </div>
+            <button class="btn-block" onclick="handleSignup()">Sign Up</button>
+            <span class="toggle-link" onclick="toggleAuth('login')">Already have an account? Log In</span>
+        </div>
+    </section>
+
+    <section id="dashboard-customer" class="dashboard-section">
+        <h2 id="cust-welcome">Hello, User</h2>
+        <p>Manage your home services efficiently.</p>
+        
+        <h3 style="margin-top: 30px;">Your Bookings</h3>
+        <div id="cust-bookings-list" class="grid">
+            <p style="color: var(--secondary);">You have no active bookings. Book a service below!</p>
+        </div>
+
+        <hr style="margin: 40px 0; border: 0; border-top: 1px solid #cbd5e1;">
+
+        <h3>Available Services</h3>
+        <div class="grid" id="services-grid"></div>
+    </section>
+
+    <section id="dashboard-admin" class="dashboard-section">
+        <h2 style="color: var(--admin-color);">🛠️ Admin Panel</h2>
+        <div class="grid">
+            <div class="card" style="border-left: 5px solid var(--admin-color);">
+                <h3>Total Bookings</h3>
+                <h1 id="adm-total-count">0</h1>
+            </div>
+            <div class="card" style="border-left: 5px solid var(--admin-color);">
+                <h3>Revenue (Est.)</h3>
+                <h1 id="adm-revenue">$0</h1>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 30px;">Manage All Bookings</h3>
+        <div style="overflow-x:auto;">
+            <table id="adm-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Customer</th>
+                        <th>Service</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="adm-table-body"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section id="dashboard-provider" class="dashboard-section">
+        <h2 style="color: var(--provider-color);">🚛 Provider Portal</h2>
+        <p>View and complete your assigned jobs.</p>
+
+        <div class="grid" id="prov-jobs-list"></div>
+    </section>
+
+    <div id="booking-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <h3>Confirm Booking</h3>
+            <div class="input-group">
+                <label>Service</label>
+                <input type="text" id="modal-service" disabled>
+                <input type="hidden" id="modal-service-id">
+            </div>
+            <div class="input-group">
+                <label>Date</label>
+                <input type="date" id="modal-date">
+            </div>
+            <div class="input-group">
+                <label>Address</label>
+                <input type="text" id="modal-address" placeholder="Enter your full address">
+            </div>
+            <button class="btn-block" onclick="submitBooking()">Confirm & Book</button>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2026 HOME EASE. All rights reserved.
+    </footer>
+
+    <script>
+        // --- DATA STORE (Simulates Database) ---
+        const db = {
+            users: [], // Will hold registered users
+            bookings: [], // Starts EMPTY
+            services: [
+                { id: 1, name: "Deep Cleaning", price: 50, icon: "🧹" },
+                { id: 2, name: "Plumbing Repair", price: 80, icon: "🔧" },
+                { id: 3, name: "AC Service", price: 60, icon: "❄️" },
+                { id: 4, name: "Electrical Help", price: 70, icon: "⚡" },
+                { id: 5, name: "Painting", price: 150, icon: "🎨" },
+                { id: 6, name: "Pest Control", price: 90, icon: "🦟" }
+            ]
+        };
+
+        // --- STATE MANAGEMENT ---
+        let currentUser = null; // { name, email, role }
+
+        // --- AUTH FUNCTIONS ---
+        function toggleAuth(view) {
+            document.getElementById('login-box').style.display = view === 'login' ? 'block' : 'none';
+            document.getElementById('signup-box').style.display = view === 'signup' ? 'block' : 'none';
+            // Clear alerts
+            document.querySelectorAll('.alert').forEach(el => el.style.display = 'none');
+        }
+
+        function handleSignup() {
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const pass = document.getElementById('reg-pass').value;
+
+            if(!name || !email || !pass) {
+                showAlert('signup-alert', 'Please fill all fields.');
+                return;
+            }
+
+            // Check if exists
+            if(db.users.find(u => u.email === email)) {
+                showAlert('signup-alert', 'Email already registered.');
+                return;
+            }
+
+            // Create User
+            const newUser = { name, email, pass, role: 'customer' };
+            db.users.push(newUser);
+            
+            alert('Account created! Please log in.');
+            toggleAuth('login');
+        }
+
+        function handleLogin() {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-pass').value;
+
+            // 1. Check Hardcoded Admin
+            if(email === 'admin' && pass === 'admin123') {
+                loginSuccess({ name: 'Super Admin', role: 'admin' });
+                return;
+            }
+
+            // 2. Check Hardcoded Provider
+            if(email === 'provider' && pass === '12345') {
+                loginSuccess({ name: 'Mike Plumber', role: 'provider' });
+                return;
+            }
+
+            // 3. Check Registered Users
+            const user = db.users.find(u => u.email === email && u.pass === pass);
+            if(user) {
+                loginSuccess(user);
+            } else {
+                showAlert('login-alert', 'Invalid credentials.');
+            }
+        }
+
+        function loginSuccess(user) {
+            currentUser = user;
+            document.getElementById('auth-section').style.display = 'none';
+            updateNav();
+            
+            // Route to dashboard
+            if(user.role === 'customer') renderCustomerDash();
+            else if(user.role === 'admin') renderAdminDash();
+            else if(user.role === 'provider') renderProviderDash();
+        }
+
+        function logout() {
+            currentUser = null;
+            document.querySelectorAll('.dashboard-section').forEach(el => el.classList.remove('active'));
+            document.getElementById('auth-section').style.display = 'flex';
+            document.getElementById('nav-links').innerHTML = '';
+            
+            // Reset Forms
+            document.getElementById('login-email').value = '';
+            document.getElementById('login-pass').value = '';
+        }
+
+        function updateNav() {
+            const nav = document.getElementById('nav-links');
+            nav.innerHTML = `
+                <span>Welcome, <b>${currentUser.name}</b></span>
+                <button onclick="logout()">Logout</button>
+            `;
+        }
+
+        function showAlert(id, msg) {
+            const el = document.getElementById(id);
+            el.textContent = msg;
+            el.style.display = 'block';
+        }
+
+        // --- DASHBOARD RENDERERS ---
+
+        // 1. CUSTOMER
+        function renderCustomerDash() {
+            document.getElementById('dashboard-customer').classList.add('active');
+            document.getElementById('cust-welcome').textContent = `Hello, ${currentUser.name}`;
+
+            // Render Services
+            const sGrid = document.getElementById('services-grid');
+            sGrid.innerHTML = db.services.map(s => `
+                <div class="card">
+                    <div class="service-icon">${s.icon}</div>
+                    <h3>${s.name}</h3>
+                    <p>Starting at $${s.price}</p>
+                    <button class="btn-block" style="margin-top:10px;" onclick="openBookingModal(${s.id})">Book Now</button>
+                </div>
+            `).join('');
+
+            // Render My Bookings
+            const myBookings = db.bookings.filter(b => b.userEmail === currentUser.email);
+            const bList = document.getElementById('cust-bookings-list');
+            
+            if(myBookings.length === 0) {
+                bList.innerHTML = `<p style="grid-column: 1/-1; text-align:center; color:#666;">No bookings yet. Start by exploring services below!</p>`;
+            } else {
+                bList.innerHTML = myBookings.map(b => {
+                    const s = db.services.find(x => x.id === b.serviceId);
+                    return `
+                    <div class="card">
+                        <h4>${s.name} ${s.icon}</h4>
+                        <p>📅 ${b.date}</p>
+                        <span class="status-badge status-${b.status.toLowerCase().replace(' ', '-')}">${b.status}</span>
+                        ${b.status === 'Pending' ? `<button onclick="cancelBooking(${b.id})" style="display:block; margin-top:10px; color:red; background:none; border:none; cursor:pointer;">Cancel</button>` : ''}
+                    </div>
+                `}).join('');
+            }
+        }
+
+        // 2. ADMIN
+        function renderAdminDash() {
+            document.getElementById('dashboard-admin').classList.add('active');
+            
+            // Stats
+            document.getElementById('adm-total-count').textContent = db.bookings.length;
+            const revenue = db.bookings
+                .filter(b => b.status === 'Completed')
+                .reduce((acc, curr) => {
+                    const s = db.services.find(x => x.id === curr.serviceId);
+                    return acc + s.price;
+                }, 0);
+            document.getElementById('adm-revenue').textContent = `$${revenue}`;
+
+            // Table
+            const tbody = document.getElementById('adm-table-body');
+            tbody.innerHTML = db.bookings.length === 0 
+                ? `<tr><td colspan="5" style="text-align:center">No bookings found in system.</td></tr>`
+                : db.bookings.map(b => {
+                    const s = db.services.find(x => x.id === b.serviceId);
+                    return `
+                    <tr>
+                        <td>#${b.id}</td>
+                        <td>${b.userName}<br><small>${b.userEmail}</small></td>
+                        <td>${s.name}</td>
+                        <td><span class="status-badge status-${b.status.toLowerCase().replace(' ', '-')}">${b.status}</span></td>
+                        <td>
+                            ${b.status === 'Pending' ? `<button onclick="updateStatus(${b.id}, 'Assigned')" style="cursor:pointer; color:blue;">Assign Provider</button>` : ''}
+                            ${b.status === 'Assigned' ? `<span style="color:gray">Waiting Provider</span>` : ''}
+                            ${b.status === 'Completed' ? `<span style="color:green">Done</span>` : ''}
+                        </td>
+                    </tr>
+                `}).join('');
+        }
+
+        // 3. PROVIDER
+        function renderProviderDash() {
+            document.getElementById('dashboard-provider').classList.add('active');
+            
+            const jobs = db.bookings.filter(b => b.status === 'Assigned' || b.status === 'In Progress');
+            const container = document.getElementById('prov-jobs-list');
+
+            if(jobs.length === 0) {
+                container.innerHTML = `<p>No jobs assigned to you currently.</p>`;
+            } else {
+                container.innerHTML = jobs.map(b => {
+                    const s = db.services.find(x => x.id === b.serviceId);
+                    return `
+                    <div class="card" style="border-left: 5px solid var(--provider-color);">
+                        <div style="display:flex; justify-content:space-between;">
+                            <h3>${s.name}</h3>
+                            <span style="font-size:1.5rem">${s.icon}</span>
+                        </div>
+                        <p><strong>Customer:</strong> ${b.userName}</p>
+                        <p><strong>Address:</strong> ${b.address}</p>
+                        <p><strong>Date:</strong> ${b.date}</p>
+                        <hr style="margin:10px 0; border:0; border-top:1px solid #eee;">
+                        <button class="btn-block" style="background:var(--provider-color)" onclick="updateStatus(${b.id}, 'Completed')">Mark Job Complete</button>
+                    </div>
+                `}).join('');
+            }
+        }
+
+        // --- OPERATIONS ---
+
+        function openBookingModal(serviceId) {
+            const s = db.services.find(x => x.id === serviceId);
+            document.getElementById('modal-service').value = s.name;
+            document.getElementById('modal-service-id').value = s.id;
+            document.getElementById('modal-date').valueAsDate = new Date();
+            document.getElementById('booking-modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('booking-modal').style.display = 'none';
+        }
+
+        function submitBooking() {
+            const serviceId = parseInt(document.getElementById('modal-service-id').value);
+            const date = document.getElementById('modal-date').value;
+            const address = document.getElementById('modal-address').value;
+
+            if(!address) { alert('Please enter address'); return; }
+
+            const newBooking = {
+                id: Math.floor(Math.random() * 9000) + 1000,
+                userEmail: currentUser.email,
+                userName: currentUser.name,
+                serviceId: serviceId,
+                date: date,
+                address: address,
+                status: 'Pending'
+            };
+
+            db.bookings.push(newBooking);
+            closeModal();
+            alert('Booking Successful!');
+            renderCustomerDash();
+        }
+
+        function cancelBooking(id) {
+            if(confirm('Cancel this booking?')) {
+                db.bookings = db.bookings.filter(b => b.id !== id);
+                renderCustomerDash();
+            }
+        }
+
+        function updateStatus(id, status) {
+            const b = db.bookings.find(x => x.id === id);
+            if(b) {
+                b.status = status;
+                alert(`Booking #${id} updated to ${status}`);
+                // Refresh current view
+                if(currentUser.role === 'admin') renderAdminDash();
+                if(currentUser.role === 'provider') renderProviderDash();
+            }
+        }
+
+    </script>
+</body>
+</html>
